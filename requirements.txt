@@ -1,4 +1,4 @@
-Abg==2.3.1
+Abg
 deep-translator
 pyromod
 openai
@@ -13,16 +13,16 @@ hachoir
 heroku3
 httpx[http2]
 lyricsgenius
-motor==2.5.0
+motor
 wget
-pillow==9.5.0
-pymongo==4.6.1  # Updated pymongo version
+pillow
+pymongo
 psutil
 pytube
 pykeyboard
 unidecode
-py-tgcalls==1.2.9
-ntgcalls==1.1.2
+py-tgcalls
+ntgcalls
 python-dotenv
 pyyaml
 requests
@@ -32,14 +32,13 @@ tgcrypto
 urllib3
 uvloop
 flask
-gunicorn==20.1.0
+gunicorn
 
-# Latest pyrogram from development branch
-git+https://github.com/KurimuzonAkuma/pyrogram@dev
+# Install pyrogram stable version from PyPI
+pyrogram
 
-# Official yt-dlp repo instead of broken links
-git+https://github.com/yt-dlp/yt-dlp
+# Use official yt-dlp package
+yt-dlp
 
-# Fix YouTube search python package
-git+https://github.com/alexmercerind/youtube-search-python@main
-git+https://github.com/joetats/youtube_search@master
+# Install YouTube search packages
+youtube-search-python
