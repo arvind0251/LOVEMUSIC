@@ -3,7 +3,7 @@ import threading
 
 import uvloop
 from flask import Flask
-from pyrogram import Client, idle
+from pyrogram import Client, idle, errors
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.types import (
     BotCommand,
@@ -15,28 +15,26 @@ from pyrogram.types import (
 )
 
 import config
+from logging import getLogger
 
-from ..logging import LOGGER
+LOGGER = getLogger(__name__)
 
 uvloop.install()
 
 # Flask app initialize
 app = Flask(__name__)
 
-
 @app.route("/")
 def home():
     return "Bot is running"
 
-
 def run():
     app.run(host="0.0.0.0", port=8000, debug=False)
-
 
 # LOVEBot Class
 class LOVEBot(Client):
     def __init__(self):
-        LOGGER(__name__).info("Starting Bot")
+        LOGGER.info("Starting Bot")
         super().__init__(
             "VIPMUSIC",
             api_id=config.API_ID,
@@ -49,18 +47,11 @@ class LOVEBot(Client):
         get_me = await self.get_me()
         self.username = get_me.username
         self.id = get_me.id
-        self.name = get_me.first_name + " " + (get_me.last_name or "")
+        self.name = f"{get_me.first_name} {get_me.last_name or ''}"
         self.mention = get_me.mention
 
         button = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="๏ ᴀᴅᴅ ᴍᴇ ɪɴ ɢʀᴏᴜᴘ ๏",
-                        url=f"https://t.me/{self.username}?startgroup=true",
-                    )
-                ]
-            ]
+            [[InlineKeyboardButton(text="๏ ᴀᴅᴅ ᴍᴇ ɪɴ ɢʀᴏᴜᴘ ๏", url=f"https://t.me/{self.username}?startgroup=true")]]
         )
 
         if config.LOG_GROUP_ID:
@@ -68,97 +59,44 @@ class LOVEBot(Client):
                 await self.send_photo(
                     config.LOG_GROUP_ID,
                     photo=config.START_IMG_URL,
-                    caption=f"╔════❰𝐖𝐄𝐋𝐂𝐎𝐌𝐄❱════❍⊱❁۪۪\n║\n║┣⪼🥀𝐁𝐨𝐭 𝐒𝐭𝐚𝐫𝐭𝐞𝐝 𝐁𝐚𝐛𝐲🎉\n║\n║┣⪼ {self.name}\n║\n║┣⪼🎈𝐈𝐃:- `{self.id}` \n║\n║┣⪼🎄@{self.username} \n║ \n║┣⪼💖𝐓𝐡𝐚𝐧𝐤𝐬 𝐅𝐨𝐫 𝐔𝐬𝐢𝐧𝐠😍\n║\n╚════════════════❍⊱❁",
+                    caption=f"🎉 Bot Started: {self.name} (@{self.username})",
                     reply_markup=button,
                 )
-            except pyrogram.errors.ChatWriteForbidden as e:
-                LOGGER(__name__).error(f"Bot cannot write to the log group: {e}")
+            except errors.ChatWriteForbidden:
+                LOGGER.error("Bot cannot write to the log group.")
                 try:
-                    await self.send_message(
-                        config.LOG_GROUP_ID,
-                        f"╔═══❰𝐖𝐄𝐋𝐂𝐎𝐌𝐄❱═══❍⊱❁۪۪\n║\n║┣⪼🥀𝐁𝐨𝐭 𝐒𝐭𝐚𝐫𝐭𝐞𝐝 𝐁𝐚𝐛𝐲🎉\n║\n║◈ {self.name}\n║\n║┣⪼🎈𝐈𝐃:- `{self.id}` \n║\n║┣⪼🎄@{self.username} \n║ \n║┣⪼💖𝐓𝐡𝐚𝐧𝐤𝐬 𝐅𝐨𝐫 𝐔𝐬𝐢𝐧𝐠😍\n║\n╚══════════════❍⊱❁",
-                        reply_markup=button,
-                    )
+                    await self.send_message(config.LOG_GROUP_ID, "🎉 Bot Started!", reply_markup=button)
                 except Exception as e:
-                    LOGGER(__name__).error(f"Failed to send message in log group: {e}")
+                    LOGGER.error(f"Failed to send message in log group: {e}")
             except Exception as e:
-                LOGGER(__name__).error(
-                    f"Unexpected error while sending to log group: {e}"
-                )
-        else:
-            LOGGER(__name__).warning(
-                "LOG_GROUP_ID is not set, skipping log group notifications."
-            )
+                LOGGER.error(f"Unexpected error: {e}")
+
         if config.SET_CMDS:
             try:
                 await self.set_bot_commands(
-                    commands=[
-                        BotCommand("start", "Start the bot"),
-                        BotCommand("help", "Get the help menu"),
-                        BotCommand("ping", "Check if the bot is alive or dead"),
-                    ],
+                    commands=[BotCommand("start", "Start the bot"), BotCommand("help", "Get the help menu"), BotCommand("ping", "Check if the bot is alive")],
                     scope=BotCommandScopeAllPrivateChats(),
                 )
                 await self.set_bot_commands(
-                    commands=[
-                        BotCommand("play", "Start playing requested song"),
-                        BotCommand("stop", "Stop the current song"),
-                        BotCommand("pause", "Pause the current song"),
-                        BotCommand("resume", "Resume the paused song"),
-                        BotCommand("queue", "Check the queue of songs"),
-                        BotCommand("skip", "Skip the current song"),
-                        BotCommand("volume", "Adjust the music volume"),
-                        BotCommand("lyrics", "Get lyrics of the song"),
-                    ],
+                    commands=[BotCommand("play", "Start playing requested song"), BotCommand("stop", "Stop the current song")],
                     scope=BotCommandScopeAllGroupChats(),
                 )
                 await self.set_bot_commands(
-                    commands=[
-                        BotCommand("start", "❥ Start the bot"),
-                        BotCommand("ping", "❥ Check the ping"),
-                        BotCommand("help", "❥ Get help"),
-                        BotCommand("vctag", "❥ Tag all for voice chat"),
-                        BotCommand("stopvctag", "❥ Stop tagging for VC"),
-                        BotCommand("tagall", "❥ Tag all members by text"),
-                        BotCommand("cancel", "❥ Cancel the tagging"),
-                        BotCommand("settings", "❥ Get the settings"),
-                        BotCommand("reload", "❥ Reload the bot"),
-                        BotCommand("play", "❥ Play the requested song"),
-                        BotCommand("vplay", "❥ Play video along with music"),
-                        BotCommand("end", "❥ Empty the queue"),
-                        BotCommand("playlist", "❥ Get the playlist"),
-                        BotCommand("stop", "❥ Stop the song"),
-                        BotCommand("lyrics", "❥ Get the song lyrics"),
-                        BotCommand("song", "❥ Download the requested song"),
-                        BotCommand("video", "❥ Download the requested video song"),
-                        BotCommand("gali", "❥ Reply with fun"),
-                        BotCommand("shayri", "❥ Get a shayari"),
-                        BotCommand("love", "❥ Get a love shayari"),
-                        BotCommand("sudolist", "❥ Check the sudo list"),
-                        BotCommand("owner", "❥ Check the owner"),
-                        BotCommand("update", "❥ Update bot"),
-                        BotCommand("gstats", "❥ Get stats of the bot"),
-                        BotCommand("repo", "❥ Check the repo"),
-                    ],
+                    commands=[BotCommand("admin", "Admin commands"), BotCommand("settings", "Get the settings")],
                     scope=BotCommandScopeAllChatAdministrators(),
                 )
             except Exception as e:
-                LOGGER(__name__).error(f"Failed to set bot commands: {e}")
+                LOGGER.error(f"Failed to set bot commands: {e}")
 
         if config.LOG_GROUP_ID:
             try:
-                chat_member_info = await self.get_chat_member(
-                    config.LOG_GROUP_ID, self.id
-                )
+                chat_member_info = await self.get_chat_member(config.LOG_GROUP_ID, self.id)
                 if chat_member_info.status != ChatMemberStatus.ADMINISTRATOR:
-                    LOGGER(__name__).error(
-                        "Please promote Bot as Admin in Logger Group"
-                    )
+                    LOGGER.error("Bot is not an Admin in Logger Group")
             except Exception as e:
-                LOGGER(__name__).error(f"Error occurred while checking bot status: {e}")
+                LOGGER.error(f"Error checking bot status: {e}")
 
-        LOGGER(__name__).info(f"MusicBot Started as {self.name}")
-
+        LOGGER.info(f"MusicBot Started as {self.name}")
 
 # Define the async boot function
 async def anony_boot():
@@ -166,18 +104,17 @@ async def anony_boot():
     await bot.start()
     await idle()
 
-
 if __name__ == "__main__":
-    LOGGER(__name__).info("Starting Flask server...")
+    LOGGER.info("Starting Flask server...")
 
     # Start Flask server in a new thread
     t = threading.Thread(target=run)
     t.daemon = True
     t.start()
 
-    LOGGER(__name__).info("Starting LOVEBot...")
+    LOGGER.info("Starting LOVEBot...")
 
-    # Run the bot
-    asyncio.run(anony_boot())
+    # Run the bot using asyncio event loop
+    asyncio.get_event_loop().run_until_complete(anony_boot())
 
-    LOGGER(__name__).info("Stopping LOVEBot...")
+    LOGGER.info("Stopping LOVEBot...")
